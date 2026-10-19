@@ -1,0 +1,649 @@
+{
+  "info": {
+    "_postman_id": "c1f2b4e0-5a3d-4c8e-9d1a-2b3c4d5e6f7a",
+    "name": "Product Service - Clean Architecture & S3 Floci",
+    "description": "Colección completa de pruebas para el servicio de productos con almacenamiento de imágenes en S3 (Floci) y base de datos H2. Incluye casos de éxito y de error con assertions automatizadas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "createdProductId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Casos de Éxito",
+      "item": [
+        {
+          "name": "POST - Crear Producto (Fecha ISO yyyy-MM-dd)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta contiene datos válidos del producto\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.idProduct).to.be.a('number');",
+                  "    pm.expect(json.nombre).to.eql('laptop');",
+                  "    pm.expect(json.cantidad).to.eql(10);",
+                  "    pm.expect(json.monto).to.eql(1299.99);",
+                  "    pm.expect(json.fechaIngreso).to.eql('2026-10-13');",
+                  "    pm.expect(json.imagen).to.match(/^laptop_20261013\\./);",
+                  "    pm.expect(json.imagenUrl).to.include('/imagenes-app/');",
+                  "    ",
+                  "    // Guardar ID para pruebas posteriores",
+                  "    pm.collectionVariables.set(\"createdProductId\", json.idProduct);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "laptop",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Laptop gamer de alta gama i7 16GB RAM",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "1299.99",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "2026-10-13",
+                  "type": "text",
+                  "description": "Formato ISO yyyy-MM-dd"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg",
+                  "description": "Archivo de imagen a guardar en Floci S3"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Crea un producto y sube la imagen a S3 Floci con nombre: laptop_20261013.<ext>"
+          }
+        },
+        {
+          "name": "POST - Crear Producto (Fecha Compacta yyyyMMdd)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Nombre de imagen generado correctamente con fecha compacta\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.nombre).to.eql('monitor');",
+                  "    pm.expect(json.fechaIngreso).to.eql('2026-10-13');",
+                  "    pm.expect(json.imagen).to.match(/^monitor_20261013\\./);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "monitor",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Monitor 4K UHD 144Hz 27 pulgadas",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "5",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "450.00",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "20261013",
+                  "type": "text",
+                  "description": "Formato compacto yyyyMMdd"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Prueba de aceptación de formato fecha yyyyMMdd (ej: 20261013)"
+          }
+        },
+        {
+          "name": "GET - Listar Todos los Productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Retorna lista de productos\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    pm.expect(json.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "GET - Obtener Producto por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Producto encontrado con id correcto\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.idProduct).to.eql(Number(pm.collectionVariables.get(\"createdProductId\")));",
+                  "    pm.expect(json.imagenUrl).to.not.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{createdProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{createdProductId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Casos de Error - Validaciones (400 Bad Request)",
+      "item": [
+        {
+          "name": "POST - Error: Nombre Vacío",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje de error indica campo nombre obligatorio\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(400);",
+                  "    pm.expect(json.message).to.include(\"nombre\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Sin nombre",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "100.00",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "2026-10-13",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "POST - Error: Cantidad Negativa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje indica cantidad no puede ser negativa\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.include(\"cantidad\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "producto-cantidad-invalida",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "-10",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "50.00",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "2026-10-13",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "POST - Error: Monto Cero o Negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje indica monto debe ser mayor a cero\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.include(\"monto\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "producto-monto-invalido",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "5",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "0",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "2026-10-13",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "POST - Error: Sin Imagen Adjunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje indica imagen obligatoria\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(400);",
+                  "    pm.expect(json.message).to.include(\"imagen\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "producto-sin-imagen",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "5",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "50.00",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "2026-10-13",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "POST - Error: Formato de Fecha Inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje indica formato de fecha soportado\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(400);",
+                  "    pm.expect(json.message).to.include(\"Formato de fecha inválido\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "producto-fecha-erronea",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "5",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "50.00",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "13-10-2026",
+                  "type": "text",
+                  "description": "Formato no estándar (debe ser yyyy-MM-dd o yyyyMMdd)"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Casos de Error - Negocio (404 & 409)",
+      "item": [
+        {
+          "name": "POST - Error 409 Conflict: Producto Duplicado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 409 Conflict\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje indica conflicto por producto duplicado\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(409);",
+                  "    pm.expect(json.error).to.eql(\"CONFLICT\");",
+                  "    pm.expect(json.message).to.include(\"Ya existe un producto con el nombre: laptop\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nombre",
+                  "value": "laptop",
+                  "type": "text",
+                  "description": "Nombre idéntico al creado en el Caso 1"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Intento de duplicar laptop",
+                  "type": "text"
+                },
+                {
+                  "key": "cantidad",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "1100.00",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaIngreso",
+                  "value": "2026-10-13",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "C:/dev/floci/imagen-prueba.jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "GET - Error 404: Producto No Encontrado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Mensaje indica producto no encontrado\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(404);",
+                  "    pm.expect(json.error).to.eql(\"NOT_FOUND\");",
+                  "    pm.expect(json.message).to.include(\"Producto no encontrado\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "999999"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

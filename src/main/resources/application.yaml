@@ -1,0 +1,50 @@
+quarkus:
+  application:
+    name: product-service
+    version: 1.0.0-SNAPSHOT
+
+  http:
+    port: ${HTTP_PORT:8080}
+    limits:
+      max-body-size: 10M
+
+  # Base de datos H2 (modo de prueba)
+  datasource:
+    db-kind: h2
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    jdbc:
+      url: ${DB_URL:jdbc:h2:mem:products;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+
+  # Hibernate ORM / Panache
+  hibernate-orm:
+    schema-management:
+      strategy: ${DB_SCHEMA_STRATEGY:drop-and-create}
+    log:
+      sql: ${DB_LOG_SQL:false}
+
+  # OpenAPI / Swagger UI
+  smallrye-openapi:
+    path: /openapi
+
+  swagger-ui:
+    path: /swagger-ui
+    always-include: true
+
+  # Logs
+  log:
+    level: INFO
+    category:
+      "com.example.application":
+        level: DEBUG
+
+# Configuración de almacenamiento de imágenes S3 compatible con Floci
+app:
+  storage:
+    s3:
+      endpoint: ${S3_ENDPOINT:http://localhost:4566}
+      region: ${S3_REGION:us-east-1}
+      bucket: ${S3_BUCKET:imagenes-app}
+      access-key: ${S3_ACCESS_KEY:test}
+      secret-key: ${S3_SECRET_KEY:test}
+      path-style-access: true
